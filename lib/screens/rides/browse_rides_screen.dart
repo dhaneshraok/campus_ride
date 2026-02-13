@@ -22,6 +22,17 @@ class BrowseRidesScreen extends StatefulWidget {
 class _BrowseRidesScreenState extends State<BrowseRidesScreen> {
   _RideFilter _activeFilter = _RideFilter.all;
   _RideSort _activeSort = _RideSort.soonest;
+  String _searchQuery = '';
+
+  List<Ride> _applySearch(List<Ride> rides) {
+    final q = _searchQuery.trim().toLowerCase();
+    if (q.isEmpty) return rides;
+    return rides.where((r) {
+      return r.destination.toLowerCase().contains(q) ||
+          r.pickupArea.toLowerCase().contains(q) ||
+          r.riderName.toLowerCase().contains(q);
+    }).toList();
+  }
 
   List<Ride> _applyFilter(List<Ride> rides) {
     final now = DateTime.now();
@@ -61,7 +72,7 @@ class _BrowseRidesScreenState extends State<BrowseRidesScreen> {
     final auth = context.watch<AuthProvider>();
     final rideProvider = context.watch<RideProvider>();
 
-    final allRides = rideProvider.openRides;
+    final allRides = _applySearch(rideProvider.openRides);
     final rides = _applySort(_applyFilter(allRides));
 
     return Scaffold(
@@ -84,7 +95,7 @@ class _BrowseRidesScreenState extends State<BrowseRidesScreen> {
                 boxShadow: AppColors.cardShadow,
               ),
               child: TextField(
-                onChanged: rideProvider.setSearchQuery,
+                onChanged: (value) => setState(() => _searchQuery = value),
                 style: const TextStyle(
                   fontSize: 15,
                   color: AppColors.darkText,
@@ -101,9 +112,10 @@ class _BrowseRidesScreenState extends State<BrowseRidesScreen> {
                     color: AppColors.rowanBrown.withAlpha(128),
                     size: 22,
                   ),
-                  suffixIcon: rideProvider.searchQuery.isNotEmpty
+                  suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          onPressed: () => rideProvider.setSearchQuery(''),
+                          onPressed: () =>
+                              setState(() => _searchQuery = ''),
                           icon: Icon(
                             Icons.close_rounded,
                             size: 18,
@@ -222,12 +234,14 @@ class _BrowseRidesScreenState extends State<BrowseRidesScreen> {
                 _sortChip(_RideSort.latest, 'Latest'),
                 const Spacer(),
                 if (_activeFilter != _RideFilter.all ||
-                    rideProvider.searchQuery.isNotEmpty)
+                    _searchQuery.isNotEmpty)
                   TextButton(
                     onPressed: () {
                       HapticFeedback.selectionClick();
-                      setState(() => _activeFilter = _RideFilter.all);
-                      rideProvider.setSearchQuery('');
+                      setState(() {
+                        _activeFilter = _RideFilter.all;
+                        _searchQuery = '';
+                      });
                     },
                     child: const Text('Clear'),
                   ),

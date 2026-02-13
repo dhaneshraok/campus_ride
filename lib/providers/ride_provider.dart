@@ -21,7 +21,6 @@ class RideProvider extends ChangeNotifier {
   List<Ride> _myDriverRides = [];
   bool _isLoading = false;
   String? _error;
-  String _searchQuery = '';
 
   StreamSubscription? _openRidesSub;
   StreamSubscription? _riderRidesSub;
@@ -37,15 +36,7 @@ class RideProvider extends ChangeNotifier {
         _chatService = chatService ?? ChatService(),
         _notificationService = notificationService ?? NotificationService();
 
-  List<Ride> get openRides {
-    if (_searchQuery.isEmpty) return _openRides;
-    final q = _searchQuery.toLowerCase();
-    return _openRides.where((r) {
-      return r.destination.toLowerCase().contains(q) ||
-          r.pickupArea.toLowerCase().contains(q) ||
-          r.riderName.toLowerCase().contains(q);
-    }).toList();
-  }
+  List<Ride> get openRides => _openRides;
 
   List<Ride> get myRiderRides => _myRiderRides;
   List<Ride> get myDriverRides => _myDriverRides;
@@ -63,12 +54,6 @@ class RideProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
   String? get error => _error;
-  String get searchQuery => _searchQuery;
-
-  void setSearchQuery(String query) {
-    _searchQuery = query;
-    notifyListeners();
-  }
 
   void initStreams(String uid) {
     _openRidesSub?.cancel();

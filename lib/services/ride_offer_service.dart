@@ -49,11 +49,6 @@ class RideOfferService {
         'updated_at': FieldValue.serverTimestamp(),
       });
 
-      txn.update(rideDoc.reference, {
-        'offer_count': FieldValue.increment(1),
-        'updated_at': FieldValue.serverTimestamp(),
-      });
-
       return true;
     });
   }
@@ -70,10 +65,6 @@ class RideOfferService {
 
       txn.update(offerDoc.reference, {
         'status': 'withdrawn',
-        'updated_at': FieldValue.serverTimestamp(),
-      });
-      txn.update(_db.collection('rides').doc(rideId), {
-        'offer_count': FieldValue.increment(-1),
         'updated_at': FieldValue.serverTimestamp(),
       });
     });

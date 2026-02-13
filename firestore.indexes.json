@@ -25,6 +25,14 @@
       ]
     },
     {
+      "collectionGroup": "rides",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "driver_uid", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "notifications",
       "queryScope": "COLLECTION",
       "fields": [

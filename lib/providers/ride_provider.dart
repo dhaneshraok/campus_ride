@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/ride_model.dart';
 import '../models/ride_offer_model.dart';
@@ -157,6 +158,9 @@ class RideProvider extends ChangeNotifier {
         }
       }
       return success;
+    } on FirebaseException catch (e) {
+      _error = e.message ?? 'Failed to create offer';
+      return false;
     } catch (e) {
       _error = 'Failed to create offer';
       return false;
@@ -347,10 +351,8 @@ class RideProvider extends ChangeNotifier {
       await _rideService.cancelRide(rideId, currentUser.uid, reason);
 
       if (ride != null) {
-        // Decline all active offers when ride is cancelled
-        if (ride.hasOffers) {
-          await _offerService.declineOtherOffers(rideId, '');
-        }
+        // Decline all active offers when ride is cancelled.
+        await _offerService.declineOtherOffers(rideId, '');
       }
     } catch (e) {
       _error = 'Failed to cancel ride';

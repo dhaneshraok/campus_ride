@@ -36,10 +36,6 @@ class RideOfferService {
       if (!rideDoc.exists) return false;
       if (rideDoc['status'] != 'OPEN') return false;
 
-      final offerDoc =
-          await txn.get(_offersRef(rideId).doc(driver.uid));
-      if (offerDoc.exists) return false; // already offered
-
       txn.set(_offersRef(rideId).doc(driver.uid), {
         'driver_uid': driver.uid,
         'driver_name': driver.fullName,

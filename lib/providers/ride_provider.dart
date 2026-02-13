@@ -141,20 +141,25 @@ class RideProvider extends ChangeNotifier {
       if (success) {
         final ride = await _rideService.getRide(rideId);
         if (ride != null) {
-          await _chatService.sendSystemMessage(
-            rideId: rideId,
-            text: '${driver.fullName} offered to drive.',
-            threadDriverUid: driver.uid,
-          );
-          await _notificationService.createNotification(
-            recipientUid: ride.riderUid,
-            type: NotificationTypes.offerReceived,
-            title: 'New Driver Offer',
-            body:
-                '${driver.fullName} wants to drive your ride to ${ride.destination}.',
-            rideId: rideId,
-            senderUid: driver.uid,
-          );
+          // Best-effort side effects: the offer is already created.
+          try {
+            await _chatService.sendSystemMessage(
+              rideId: rideId,
+              text: '${driver.fullName} offered to drive.',
+              threadDriverUid: driver.uid,
+            );
+          } catch (_) {}
+          try {
+            await _notificationService.createNotification(
+              recipientUid: ride.riderUid,
+              type: NotificationTypes.offerReceived,
+              title: 'New Driver Offer',
+              body:
+                  '${driver.fullName} wants to drive your ride to ${ride.destination}.',
+              rideId: rideId,
+              senderUid: driver.uid,
+            );
+          } catch (_) {}
         }
       }
       return success;

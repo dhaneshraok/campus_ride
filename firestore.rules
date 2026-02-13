@@ -1,0 +1,184 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function rideDoc(rideId) {
+      return get(/databases/$(database)/documents/rides/$(rideId));
+    }
+
+    // ── Users ──
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow update: if signedIn() && request.auth.uid == userId;
+      allow delete: if false;
+
+      // Reviews subcollection
+      match /reviews/{reviewId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+            && request.resource.data.reviewer_uid == request.auth.uid
+            && request.auth.uid != userId;
+        allow update, delete: if false;
+      }
+    }
+
+    // ── Rides ──
+    match /rides/{rideId} {
+      allow read: if signedIn()
+          && (
+            resource.data.status == 'OPEN'
+            || resource.data.rider_uid == request.auth.uid
+            || resource.data.driver_uid == request.auth.uid
+          );
+
+      allow create: if signedIn()
+          && request.resource.data.rider_uid == request.auth.uid
+          && request.resource.data.status == 'OPEN';
+
+      allow update: if signedIn() && (
+        // Rider can edit details while ride is OPEN.
+        (
+          resource.data.rider_uid == request.auth.uid
+          && resource.data.status == 'OPEN'
+          && request.resource.data.status == 'OPEN'
+          && request.resource.data.rider_uid == resource.data.rider_uid
+          && request.resource.data.driver_uid == resource.data.driver_uid
+        )
+        // Driver accepts an OPEN ride.
+        || (
+          resource.data.status == 'OPEN'
+          && request.resource.data.status == 'ACCEPTED'
+          && request.resource.data.driver_uid == request.auth.uid
+        )
+        // Assigned driver starts the ride.
+        || (
+          resource.data.status == 'ACCEPTED'
+          && request.resource.data.status == 'IN_PROGRESS'
+          && resource.data.driver_uid == request.auth.uid
+          && request.resource.data.driver_uid == resource.data.driver_uid
+        )
+        // Assigned driver completes the ride.
+        || (
+          resource.data.status == 'IN_PROGRESS'
+          && request.resource.data.status == 'COMPLETED'
+          && resource.data.driver_uid == request.auth.uid
+          && request.resource.data.driver_uid == resource.data.driver_uid
+        )
+        // Either participant can cancel an active ride.
+        || (
+          resource.data.status in ['OPEN', 'ACCEPTED', 'IN_PROGRESS']
+          && request.resource.data.status == 'CANCELLED'
+          && request.resource.data.cancelled_by == request.auth.uid
+          && (
+            resource.data.rider_uid == request.auth.uid
+            || resource.data.driver_uid == request.auth.uid
+          )
+        )
+        // Completed rides can be updated for rating/points by participants.
+        || (
+          resource.data.status == 'COMPLETED'
+          && request.resource.data.status == 'COMPLETED'
+          && (
+            resource.data.rider_uid == request.auth.uid
+            || resource.data.driver_uid == request.auth.uid
+          )
+          && request.resource.data.rider_uid == resource.data.rider_uid
+          && request.resource.data.driver_uid == resource.data.driver_uid
+        )
+      );
+
+      allow delete: if false;
+
+      // Messages subcollection (chat)
+      match /messages/{messageId} {
+        allow read: if signedIn()
+            && (
+              rideDoc(rideId).data.rider_uid == request.auth.uid
+              || rideDoc(rideId).data.driver_uid == request.auth.uid
+              || resource.data.thread_driver_uid == request.auth.uid
+            );
+        allow create: if signedIn()
+            && (
+              (
+                request.resource.data.sender_uid == request.auth.uid
+                && (
+                  rideDoc(rideId).data.rider_uid == request.auth.uid
+                  || rideDoc(rideId).data.driver_uid == request.auth.uid
+                  || request.resource.data.thread_driver_uid == request.auth.uid
+                )
+              )
+              || (
+                request.resource.data.sender_uid == 'system'
+                && (
+                  rideDoc(rideId).data.rider_uid == request.auth.uid
+                  || rideDoc(rideId).data.driver_uid == request.auth.uid
+                )
+              )
+            );
+        allow update: if false;
+        allow delete: if signedIn()
+            && (
+              rideDoc(rideId).data.rider_uid == request.auth.uid
+              || rideDoc(rideId).data.driver_uid == request.auth.uid
+              || resource.data.thread_driver_uid == request.auth.uid
+            );
+      }
+
+      // Offers subcollection (driver offers on a ride)
+      match /offers/{offerId} {
+        allow read: if signedIn()
+            && (
+              rideDoc(rideId).data.rider_uid == request.auth.uid
+              || rideDoc(rideId).data.driver_uid == request.auth.uid
+              || resource.data.driver_uid == request.auth.uid
+            );
+        allow create: if signedIn()
+            && offerId == request.auth.uid
+            && request.resource.data.driver_uid == request.auth.uid
+            && rideDoc(rideId).data.status == 'OPEN'
+            && rideDoc(rideId).data.rider_uid != request.auth.uid;
+        allow update: if signedIn()
+            && request.resource.data.driver_uid == resource.data.driver_uid
+            && (
+              resource.data.driver_uid == request.auth.uid
+              || rideDoc(rideId).data.rider_uid == request.auth.uid
+              || rideDoc(rideId).data.driver_uid == request.auth.uid
+            );
+        allow delete: if false;
+      }
+    }
+
+    // ── Notifications ──
+    match /notifications/{notifId} {
+      allow read: if signedIn()
+          && resource.data.recipient_uid == request.auth.uid;
+
+      allow create: if signedIn()
+          && (
+            request.resource.data.recipient_uid == request.auth.uid
+            || (
+              request.resource.data.sender_uid is string
+              && request.resource.data.sender_uid == request.auth.uid
+            )
+          );
+
+      allow update: if signedIn()
+          && resource.data.recipient_uid == request.auth.uid
+          && request.resource.data.recipient_uid == resource.data.recipient_uid;
+
+      allow delete: if false;
+    }
+
+    // ── Reports ──
+    match /reports/{reportId} {
+      allow create: if signedIn()
+          && request.resource.data.reporter_uid == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+  }
+}

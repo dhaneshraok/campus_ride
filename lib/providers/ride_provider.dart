@@ -139,17 +139,15 @@ class RideProvider extends ChangeNotifier {
 
       final success = await _offerService.createOffer(rideId, driver);
       if (success) {
-        final ride = await _rideService.getRide(rideId);
-        if (ride != null) {
-          // Best-effort side effects: the offer is already created.
-          try {
+        // Best-effort side effects: the offer is already created.
+        try {
+          final ride = await _rideService.getRide(rideId);
+          if (ride != null) {
             await _chatService.sendSystemMessage(
               rideId: rideId,
               text: '${driver.fullName} offered to drive.',
               threadDriverUid: driver.uid,
             );
-          } catch (_) {}
-          try {
             await _notificationService.createNotification(
               recipientUid: ride.riderUid,
               type: NotificationTypes.offerReceived,
@@ -159,8 +157,8 @@ class RideProvider extends ChangeNotifier {
               rideId: rideId,
               senderUid: driver.uid,
             );
-          } catch (_) {}
-        }
+          }
+        } catch (_) {}
       }
       return success;
     } on FirebaseException catch (e) {

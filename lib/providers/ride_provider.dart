@@ -9,6 +9,7 @@ import '../services/ride_offer_service.dart';
 import '../services/chat_service.dart';
 import '../services/notification_service.dart';
 import '../constants/notification_types.dart';
+import '../constants/ride_status.dart';
 
 class RideProvider extends ChangeNotifier {
   final RideService _rideService;
@@ -92,8 +93,12 @@ class RideProvider extends ChangeNotifier {
   void _startTimeRefresh() {
     _timeRefreshTimer?.cancel();
     // Time-based ride state (e.g. stale OPEN rides) needs periodic reevaluation.
-    _timeRefreshTimer =
-        Timer.periodic(const Duration(seconds: 30), (_) => notifyListeners());
+    _timeRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      final hasOpenRiderRides =
+          _myRiderRides.any((r) => r.status == RideStatus.open);
+      if (!hasOpenRiderRides) return;
+      notifyListeners();
+    });
   }
 
   Future<String?> createRide(Ride ride) async {

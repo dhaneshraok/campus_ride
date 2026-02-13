@@ -531,7 +531,8 @@ class _HomeTabState extends State<HomeTab>
 
   Widget _buildAvailableRides(
       BuildContext context, List<Ride> rides, String myUid) {
-    final otherRides = rides.take(5).toList();
+    final otherRides =
+        rides.where((r) => r.riderUid != myUid).take(5).toList();
 
     if (otherRides.isEmpty) {
       return Container(

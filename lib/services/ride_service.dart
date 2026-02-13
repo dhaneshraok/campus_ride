@@ -106,6 +106,7 @@ class RideService {
     return _ridesRef
         .where('status', isEqualTo: 'OPEN')
         .orderBy('pickup_datetime')
+        .limit(100)
         .snapshots()
         .map((snap) => snap.docs.map((d) => Ride.fromDocument(d)).toList());
   }

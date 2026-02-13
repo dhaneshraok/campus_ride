@@ -72,7 +72,10 @@ class _BrowseRidesScreenState extends State<BrowseRidesScreen> {
     final auth = context.watch<AuthProvider>();
     final rideProvider = context.watch<RideProvider>();
 
-    final allRides = _applySearch(rideProvider.openRides);
+    final myUid = auth.currentUser?.uid ?? '';
+    final allRides = _applySearch(
+      rideProvider.openRides.where((r) => r.riderUid != myUid).toList(),
+    );
     final rides = _applySort(_applyFilter(allRides));
 
     return Scaffold(

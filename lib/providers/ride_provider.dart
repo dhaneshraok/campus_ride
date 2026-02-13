@@ -25,6 +25,7 @@ class RideProvider extends ChangeNotifier {
   StreamSubscription? _openRidesSub;
   StreamSubscription? _riderRidesSub;
   StreamSubscription? _driverRidesSub;
+  Timer? _timeRefreshTimer;
 
   RideProvider({
     RideService? rideService,
@@ -84,6 +85,15 @@ class RideProvider extends ChangeNotifier {
         notifyListeners();
       },
     );
+
+    _startTimeRefresh();
+  }
+
+  void _startTimeRefresh() {
+    _timeRefreshTimer?.cancel();
+    // Time-based ride state (e.g. stale OPEN rides) needs periodic reevaluation.
+    _timeRefreshTimer =
+        Timer.periodic(const Duration(seconds: 30), (_) => notifyListeners());
   }
 
   Future<String?> createRide(Ride ride) async {
@@ -381,6 +391,7 @@ class RideProvider extends ChangeNotifier {
     _openRidesSub?.cancel();
     _riderRidesSub?.cancel();
     _driverRidesSub?.cancel();
+    _timeRefreshTimer?.cancel();
     super.dispose();
   }
 }

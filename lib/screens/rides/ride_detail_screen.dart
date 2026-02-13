@@ -668,8 +668,29 @@ class _RideDetailContentState extends State<_RideDetailContent>
               builder: (context, snap) {
                 final offer = snap.data;
 
-                // Already offered — no button in action bar
-                if (offer != null) return const SizedBox.shrink();
+                // Already offered — keep chat access visible in action bar.
+                if (offer != null) {
+                  return SizedBox(
+                    height: 54,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openThreadChat(context, ride.id, offer),
+                      icon: const Icon(Icons.chat_bubble_outline_rounded),
+                      label: const Text(
+                        'Open Chat',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.rowanBrown,
+                        side: BorderSide(
+                          color: AppColors.rowanBrown.withValues(alpha: 0.35),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  );
+                }
 
                 return SizedBox(
                   height: 54,

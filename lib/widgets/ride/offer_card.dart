@@ -210,29 +210,67 @@ class OfferCard extends StatelessWidget {
         },
       );
     } else {
-      // Driver: Withdraw (pending), or Confirm (rider_confirmed)
+      // Driver: Chat + Withdraw (pending), or Chat + Confirm (rider_confirmed)
       if (offer.isPending) {
-        return _ActionButton(
-          label: 'Withdraw Offer',
-          icon: Icons.undo_rounded,
-          color: AppColors.error,
-          outlined: true,
-          onTap: () {
-            HapticFeedback.mediumImpact();
-            onWithdraw?.call();
-          },
+        return Row(
+          children: [
+            Expanded(
+              child: _ActionButton(
+                label: 'Chat',
+                icon: Icons.chat_bubble_outline_rounded,
+                color: AppColors.rowanBrown,
+                outlined: true,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onChat?.call();
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionButton(
+                label: 'Withdraw',
+                icon: Icons.undo_rounded,
+                color: AppColors.error,
+                outlined: true,
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  onWithdraw?.call();
+                },
+              ),
+            ),
+          ],
         );
       }
       if (offer.isRiderConfirmed) {
-        return _ActionButton(
-          label: 'Confirm Ride',
-          icon: Icons.check_circle_rounded,
-          color: AppColors.success,
-          outlined: false,
-          onTap: () {
-            HapticFeedback.mediumImpact();
-            onConfirm?.call();
-          },
+        return Row(
+          children: [
+            Expanded(
+              child: _ActionButton(
+                label: 'Chat',
+                icon: Icons.chat_bubble_outline_rounded,
+                color: AppColors.rowanBrown,
+                outlined: true,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onChat?.call();
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionButton(
+                label: 'Confirm Ride',
+                icon: Icons.check_circle_rounded,
+                color: AppColors.success,
+                outlined: false,
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  onConfirm?.call();
+                },
+              ),
+            ),
+          ],
         );
       }
       return const SizedBox.shrink();
